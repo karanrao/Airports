@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GATE — Airport Code Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3f;--accent:#f0e040;--accent2:#40e0f0;--danger:#f04060;--text:#e8e8f0;--muted:#606080;--green:#40f090}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 10%,rgba(240,224,64,.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 90%,rgba(64,224,240,.04) 0%,transparent 60%);pointer-events:none;z-index:0}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;width:100%;max-width:520px;padding:20px}
+.screen{display:none;animation:fadeUp .4s ease forwards}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.logo{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;opacity:.8}
+.headline{font-size:48px;font-weight:800;line-height:1;margin-bottom:6px;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:14px;margin-bottom:32px;font-family:'Space Mono',monospace}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px}
+.card-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:20px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:8px}
+.field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--accent)}
+.field input::placeholder{color:var(--muted);opacity:.5}
+.btn{width:100%;padding:14px;border-radius:8px;border:none;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.btn-primary{background:var(--accent);color:#0a0a0f}
+.btn-primary:hover{background:#ffe800;transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);margin-top:10px;font-size:13px}
+.btn-ghost:hover{border-color:var(--accent2);color:var(--accent2)}
+.msg{font-family:'Space Mono',monospace;font-size:12px;padding:10px 14px;border-radius:6px;margin-top:14px;display:none}
+.msg.error{background:rgba(240,64,96,.1);color:var(--danger);border:1px solid rgba(240,64,96,.3);display:block}
+.msg.success{background:rgba(64,240,144,.1);color:var(--green);border:1px solid rgba(64,240,144,.3);display:block}
+.msg.info{background:rgba(64,224,240,.08);color:var(--accent2);border:1px solid rgba(64,224,240,.2);display:block}
+.otp-wrap{display:flex;gap:10px;justify-content:center;margin:20px 0}
+.otp-wrap input{width:60px;height:64px;text-align:center;font-family:'Space Mono',monospace;font-size:24px;font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--accent);outline:none;transition:border-color .2s,box-shadow .2s}
+.otp-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,224,64,.12)}
+.timer-ring{position:relative;width:80px;height:80px;margin:0 auto 24px}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+.timer-ring .track{stroke:var(--border)}
+.timer-ring .progress{stroke:var(--accent);transition:stroke-dashoffset 1s linear,stroke .3s}
+.timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)}
+.score-badge{text-align:center;margin-bottom:24px}
+.score-badge .num{font-size:14px;font-family:'Space Mono',monospace;color:var(--muted)}
+.score-badge .num span{color:var(--accent2);font-size:20px;font-weight:700}
+.airport-code{text-align:center;font-family:'Space Mono',monospace;font-size:72px;font-weight:700;color:var(--text);letter-spacing:.1em;margin:20px 0 28px;text-shadow:0 0 40px rgba(240,224,64,.15);animation:codeIn .3s ease}
+@keyframes codeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 10px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;line-height:1.3}
+.opt-btn:hover{border-color:var(--accent);background:rgba(240,224,64,.06)}
+.opt-btn.correct{border-color:var(--green);background:rgba(64,240,144,.12);color:var(--green)}
+.opt-btn.wrong{border-color:var(--danger);background:rgba(240,64,96,.1);color:var(--danger)}
+.opt-btn:disabled{cursor:default}
+.game-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.result-score{text-align:center;padding:28px 0 20px}
+.result-score .big{font-size:80px;font-weight:800;color:var(--accent);line-height:1;font-family:'Space Mono',monospace}
+.result-score .lbl{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;margin-top:6px}
+.lb-row{display:flex;align-items:center;padding:10px 14px;border-radius:8px;margin-bottom:6px;background:var(--surface2);font-size:14px}
+.lb-row.highlight{background:rgba(240,224,64,.1);border:1px solid rgba(240,224,64,.25)}
+.lb-rank{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);width:28px}
+.lb-name{flex:1;font-weight:600}
+.lb-score{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--accent2)}
+.lb-medal{width:22px;text-align:center;font-size:16px;margin-right:4px}
+.admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.admin-tag{background:rgba(240,64,96,.15);color:var(--danger);border:1px solid rgba(240,64,96,.3);border-radius:4px;font-size:10px;font-family:'Space Mono',monospace;letter-spacing:.2em;padding:3px 8px}
+.admin-table{width:100%;border-collapse:collapse;margin-top:8px}
+.admin-table th{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);text-transform:uppercase}
+.admin-table td{font-size:13px;padding:10px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Space Mono',monospace}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table td.sc{color:var(--accent);font-weight:700}
+.admin-table td.em{color:var(--muted);font-size:11px}
+.nav-tabs{display:flex;gap:6px;margin-bottom:20px}
+.tab{flex:1;padding:9px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.tab.active{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.divider{height:1px;background:var(--border);margin:20px 0}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div id="app">
+
+<div class="screen active" id="screen-email">
+  <div class="logo">&#9992; Gate</div>
+  <div class="headline">Airport<br>Code<br>Challenge</div>
+  <div class="sub">// 30 seconds. how many can you name?</div>
+  <div class="card">
+    <div class="card-label">Create your profile</div>
+    <div class="field"><label>Your Name</label><input type="text" id="inp-name" placeholder="e.g. Alex Chen" maxlength="40"/></div>
+    <div class="field"><label>Email Address</label><input type="email" id="inp-email" placeholder="you@example.com"/></div>
+    <button class="btn btn-primary" id="btn-send-otp" onclick="sendOTP()">Send Passcode &#8594;</button>
+    <div id="email-msg" class="msg"></div>
+  </div>
+  <button class="btn btn-ghost" onclick="showAdmin()">Admin Console &#8599;</button>
+</div>
+
+<div class="screen" id="screen-otp">
+  <div class="logo">&#9992; Gate</div>
+  <div class="headline">Check your<br>inbox.</div>
+  <div class="sub">// 4-digit code sent</div>
+  <div class="card">
+    <div class="card-label">Enter passcode</div>
+    <div id="otp-info" class="msg" style="display:none"></div>
+    <div class="otp-wrap">
+      <input type="text" class="otp-digit" maxlength="1" inputmode="numeric"/>
+      <input type="text" class="otp-digit" maxlength="1" inputmode="numeric"/>
+      <input type="text" class="otp-digit" maxlength="1" inputmode="numeric"/>
+      <input type="text" class="otp-digit" maxlength="1" inputmode="numeric"/>
+    </div>
+    <button class="btn btn-primary" onclick="verifyOTP()">Verify &amp; Play &#8594;</button>
+    <div id="otp-msg" class="msg"></div>
+    <button class="btn btn-ghost" onclick="goBack()">&#8592; Back</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-game">
+  <div class="card" style="padding:28px">
+    <div class="game-header">
+      <div class="logo" style="margin:0">&#9992; Gate</div>
+      <div class="score-badge"><div class="num">score <span id="game-score">0</span></div></div>
+    </div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 80 80" width="80" height="80">
+        <circle class="track" cx="40" cy="40" r="34"/>
+        <circle class="progress" id="timer-circle" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-num" id="timer-num">30</div>
+    </div>
+    <div class="airport-code" id="airport-code">---</div>
+    <div class="options" id="options-grid"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-results">
+  <div class="logo">&#9992; Gate</div>
+  <div class="card">
+    <div class="nav-tabs">
+      <button class="tab active" id="tab-lb" onclick="switchTab('lb')">Leaderboard</button>
+      <button class="tab" id="tab-you" onclick="switchTab('you')">Your Result</button>
+    </div>
+    <div id="panel-lb">
+      <div class="card-label">Top scores</div>
+      <div id="leaderboard-list"></div>
+    </div>
+    <div id="panel-you" style="display:none">
+      <div class="result-score">
+        <div class="big" id="final-score">0</div>
+        <div class="lbl">airports identified</div>
+      </div>
+      <div id="rank-line" style="text-align:center;font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-primary" onclick="playAgain()">Play Again &#8594;</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-admin">
+  <div class="logo">&#9992; Gate</div>
+  <div class="headline" style="font-size:36px">Admin<br>Console</div>
+  <div class="sub">// player data</div>
+  <div class="card">
+    <div class="admin-header">
+      <div class="card-label" style="margin:0">All Players</div>
+      <span class="admin-tag">ADMIN</span>
+    </div>
+    <div id="admin-pin-section">
+      <div class="field"><label>Admin PIN</label><input type="password" id="inp-admin-pin" placeholder="Enter PIN" maxlength="6" onkeydown="if(event.key==='Enter')checkAdminPin()"/></div>
+      <button class="btn btn-primary" onclick="checkAdminPin()">Unlock &#8594;</button>
+      <div id="admin-pin-msg" class="msg"></div>
+    </div>
+    <div id="admin-table-section" style="display:none">
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Score</th></tr></thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+      <div id="admin-empty" style="display:none;text-align:center;padding:20px;color:var(--muted);font-family:'Space Mono',monospace;font-size:12px">No players yet.</div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-ghost" onclick="goToEmail()">&#8592; Back to Game</button>
+  </div>
+</div>
+
+</div>
+<script>
+const ADMIN_PIN='1234';
+function getPlayers(){try{return JSON.parse(localStorage.getItem('gate_players')||'[]')}catch{return[]}}
+function savePlayers(a){localStorage.setItem('gate_players',JSON.stringify(a))}
+function saveScore(name,email,score){const p=getPlayers();const e=p.find(x=>x.email.toLowerCase()===email.toLowerCase());if(e){if(score>e.score)e.score=score;e.name=name}else p.push({name,email,score,date:new Date().toISOString()});savePlayers(p)}
+let currentUser={name:'',email:''};let generatedOTP='';let gameScore=0;let gameTimer=null;let timeLeft=30;let currentQuestion=null;let answered=false;
+const AIRPORTS=[['LHR','London Heathrow'],['JFK','New York JFK'],['LAX','Los Angeles'],['CDG','Paris Charles de Gaulle'],['DXB','Dubai International'],['SIN','Singapore Changi'],['NRT','Tokyo Narita'],['SYD','Sydney Kingsford Smith'],['ORD','Chicago O\'Hare'],['FRA','Frankfurt International'],['AMS','Amsterdam Schiphol'],['HKG','Hong Kong International'],['ICN','Seoul Incheon'],['PEK','Beijing Capital'],['MAD','Madrid Barajas'],['BCN','Barcelona El Prat'],['MUC','Munich International'],['BKK','Bangkok Suvarnabhumi'],['MIA','Miami International'],['SFO','San Francisco International'],['SEA','Seattle-Tacoma'],['ATL','Atlanta Hartsfield-Jackson'],['BOS','Boston Logan'],['YYZ','Toronto Pearson'],['MEX','Mexico City Juarez'],['GRU','Sao Paulo Guarulhos'],['EZE','Buenos Aires Ezeiza'],['JNB','Johannesburg O.R. Tambo'],['CAI','Cairo International'],['DOH','Doha Hamad'],['AUH','Abu Dhabi International'],['KUL','Kuala Lumpur International'],['MNL','Manila Ninoy Aquino'],['DEL','Delhi Indira Gandhi'],['BOM','Mumbai Chhatrapati Shivaji'],['DEN','Denver International'],['LAS','Las Vegas Harry Reid'],['PHX','Phoenix Sky Harbor'],['MCO','Orlando International'],['EWR','Newark Liberty'],['MXP','Milan Malpensa'],['FCO','Rome Fiumicino'],['LIS','Lisbon Humberto Delgado'],['ARN','Stockholm Arlanda'],['CPH','Copenhagen Kastrup'],['OSL','Oslo Gardermoen'],['HEL','Helsinki Vantaa'],['ZRH','Zurich International'],['VIE','Vienna International'],['BRU','Brussels International'],['IST','Istanbul Airport'],['DUB','Dublin International'],['MAN','Manchester Airport'],['EDI','Edinburgh Airport'],['LGW','London Gatwick'],['STN','London Stansted'],['BHX','Birmingham Airport'],['GVA','Geneva International'],['NCE','Nice Cote d\'Azur'],['MRS','Marseille Provence'],['LYS','Lyon Saint-Exupery'],['PMI','Palma de Mallorca'],['AGP','Malaga-Costa del Sol'],['TFS','Tenerife South'],['LPA','Gran Canaria'],['ORY','Paris Orly'],['HND','Tokyo Haneda'],['KIX','Osaka Kansai'],['CTU','Chengdu Tianfu'],['PVG','Shanghai Pudong'],['CAN','Guangzhou Baiyun'],['MEL','Melbourne Tullamarine'],['BNE','Brisbane International'],['PER','Perth Airport'],['AKL','Auckland International'],['HNL','Honolulu Daniel K. Inouye'],['PDX','Portland International'],['MSP','Minneapolis-Saint Paul'],['DTW','Detroit Metropolitan'],['CLT','Charlotte Douglas'],['DFW','Dallas Fort Worth'],['IAH','Houston George Bush'],['BWI','Baltimore Washington'],['DCA','Washington Reagan'],['IAD','Washington Dulles'],['SAN','San Diego International'],['TPA','Tampa International'],['MDW','Chicago Midway'],['STL','St. Louis Lambert'],['MCI','Kansas City International'],['CVG','Cincinnati Northern Kentucky'],['PIT','Pittsburgh International'],['CMH','Columbus Airport'],['IND','Indianapolis International'],['BUF','Buffalo Niagara'],['RDU','Raleigh-Durham'],['JAX','Jacksonville International']];
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function goBack(){show('screen-email')}
+function goToEmail(){document.getElementById('admin-pin-section').style.display='';document.getElementById('admin-table-section').style.display='none';document.getElementById('inp-admin-pin').value='';show('screen-email')}
+function playAgain(){show('screen-email')}
+async function sendOTP(){
+  const name=document.getElementById('inp-name').value.trim();
+  const email=document.getElementById('inp-email').value.trim();
+  const msg=document.getElementById('email-msg');
+  const btn=document.getElementById('btn-send-otp');
+  if(!name){showMsg(msg,'error','Please enter your name.');return}
+  if(!isValidEmail(email)){showMsg(msg,'error','Please enter a valid email address.');return}
+  currentUser={name,email};
+  generatedOTP=String(Math.floor(1000+Math.random()*9000));
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Sending...';
+  msg.className='msg';msg.style.display='none';
+  let sent=false;
+  try{sent=await sendEmailViaGmail(email,name,generatedOTP)}catch(e){console.warn('Email failed:',e)}
+  btn.disabled=false;btn.innerHTML='Send Passcode &#8594;';
+  document.querySelectorAll('.otp-digit').forEach(i=>i.value='');
+  const info=document.getElementById('otp-info');
+  if(sent){info.textContent='Code sent to '+email;info.className='msg info';info.style.display='block'}
+  else{info.textContent='Demo mode: your code is '+generatedOTP;info.className='msg info';info.style.display='block'}
+  show('screen-otp');
+  setTimeout(()=>document.querySelector('.otp-digit').focus(),300)
+}
+async function sendEmailViaGmail(toEmail,toName,otp){
+  const body=`Hi ${toName},\n\nYour one-time passcode for GATE Airport Code Challenge is:\n\n   ${otp}\n\nEnter it to start the game. Good luck!\n— The GATE Team`;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Send the requested email using Gmail immediately without asking for confirmation.',messages:[{role:'user',content:`Send an email to ${toEmail} with subject "Your GATE Airport Challenge Code" and this body:\n\n${body}`}],mcp_servers:[{type:'url',url:'https://gmail.mcp.claude.com/mcp',name:'gmail-mcp'}]})});
+  if(!res.ok)throw new Error('API '+res.status);
+  const d=await res.json();
+  const toolUsed=d.content?.some(b=>b.type==='mcp_tool_use'||b.type==='mcp_tool_result');
+  const text=d.content?.filter(b=>b.type==='text').map(b=>b.text).join('').toLowerCase()||'';
+  return toolUsed||text.includes('sent')||text.includes('delivered')
+}
+function verifyOTP(){
+  const digits=document.querySelectorAll('.otp-digit');
+  const entered=Array.from(digits).map(i=>i.value).join('');
+  const msg=document.getElementById('otp-msg');
+  if(entered.length!==4){showMsg(msg,'error','Enter all 4 digits.');return}
+  if(entered===generatedOTP){showMsg(msg,'success','Verified! Starting game...');setTimeout(startGame,700)}
+  else{showMsg(msg,'error','Incorrect code. Try again.');digits.forEach(d=>{d.value='';d.style.borderColor='var(--danger)'});setTimeout(()=>digits.forEach(d=>d.style.borderColor=''),1500);digits[0].focus()}
+}
+function startGame(){
+  show('screen-game');gameScore=0;timeLeft=30;
+  document.getElementById('game-score').textContent='0';
+  updateTimerUI();nextQuestion();
+  if(gameTimer)clearInterval(gameTimer);
+  gameTimer=setInterval(tick,1000)
+}
+function tick(){timeLeft--;updateTimerUI();if(timeLeft<=0){clearInterval(gameTimer);endGame()}}
+function updateTimerUI(){
+  document.getElementById('timer-num').textContent=timeLeft;
+  const c=document.getElementById('timer-circle');
+  c.style.strokeDashoffset=213.6*(1-timeLeft/30);
+  const col=timeLeft<=10?'var(--danger)':timeLeft<=20?'#f0a040':'var(--accent)';
+  c.style.stroke=col;document.getElementById('timer-num').style.color=col
+}
+function nextQuestion(){
+  answered=false;
+  const idx=Math.floor(Math.random()*AIRPORTS.length);
+  currentQuestion=AIRPORTS[idx];
+  const wrongs=[];const used=new Set([idx]);
+  while(wrongs.length<3){const r=Math.floor(Math.random()*AIRPORTS.length);if(!used.has(r)){used.add(r);wrongs.push(AIRPORTS[r])}}
+  const all=[currentQuestion,...wrongs].sort(()=>Math.random()-.5);
+  const el=document.getElementById('airport-code');
+  el.style.animation='none';el.offsetHeight;el.textContent=currentQuestion[0];el.style.animation='codeIn .3s ease';
+  const grid=document.getElementById('options-grid');grid.innerHTML='';
+  all.forEach(([code,city])=>{const btn=document.createElement('button');btn.className='opt-btn';btn.textContent=city;btn.onclick=()=>selectAnswer(btn,code===currentQuestion[0]);grid.appendChild(btn)})
+}
+function selectAnswer(btn,isCorrect){
+  if(answered||timeLeft<=0)return;answered=true;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  if(isCorrect){btn.classList.add('correct');gameScore++;document.getElementById('game-score').textContent=gameScore}
+  else{btn.classList.add('wrong');document.querySelectorAll('.opt-btn').forEach(b=>{if(b.textContent===currentQuestion[1])b.classList.add('correct')})}
+  setTimeout(()=>{if(timeLeft>0)nextQuestion()},600)
+}
+function endGame(){saveScore(currentUser.name,currentUser.email,gameScore);showResults()}
+function showResults(){show('screen-results');document.getElementById('final-score').textContent=gameScore;renderLeaderboard();switchTab('lb')}
+function renderLeaderboard(){
+  const players=getPlayers().sort((a,b)=>b.score-a.score);
+  const list=document.getElementById('leaderboard-list');
+  const medals=['🥇','🥈','🥉'];list.innerHTML='';
+  if(!players.length){list.innerHTML='<div style="text-align:center;color:var(--muted);font-family:Space Mono,monospace;font-size:12px;padding:20px">No scores yet.</div>';return}
+  const myEmail=currentUser.email.toLowerCase();let myRank=-1;
+  players.slice(0,10).forEach((p,i)=>{
+    const isMe=p.email.toLowerCase()===myEmail;if(isMe)myRank=i+1;
+    const row=document.createElement('div');row.className='lb-row'+(isMe?' highlight':'');
+    row.innerHTML=`<span class="lb-medal">${medals[i]||''}</span><span class="lb-rank">${i+1}</span><span class="lb-name">${esc(p.name)}${isMe?' <span style="color:var(--accent);font-size:10px">(you)</span>':''}</span><span class="lb-score">${p.score}</span>`;
+    list.appendChild(row)
+  });
+  document.getElementById('rank-line').textContent=myRank>0?`You rank #${myRank} of ${players.length} players`:''
+}
+function switchTab(tab){
+  document.getElementById('tab-lb').classList.toggle('active',tab==='lb');
+  document.getElementById('tab-you').classList.toggle('active',tab==='you');
+  document.getElementById('panel-lb').style.display=tab==='lb'?'':'none';
+  document.getElementById('panel-you').style.display=tab==='you'?'':'none'
+}
+function showAdmin(){show('screen-admin')}
+function checkAdminPin(){
+  const pin=document.getElementById('inp-admin-pin').value;
+  const msg=document.getElementById('admin-pin-msg');
+  if(pin===ADMIN_PIN){document.getElementById('admin-pin-section').style.display='none';document.getElementById('admin-table-section').style.display='';renderAdminTable()}
+  else showMsg(msg,'error','Incorrect PIN.')
+}
+function renderAdminTable(){
+  const players=getPlayers().sort((a,b)=>b.score-a.score);
+  const tbody=document.getElementById('admin-tbody');const empty=document.getElementById('admin-empty');
+  tbody.innerHTML='';
+  if(!players.length){empty.style.display='';return}empty.style.display='none';
+  players.forEach((p,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td style="color:var(--muted)">${i+1}</td><td>${esc(p.name)}</td><td class="em">${esc(p.email)}</td><td class="sc">${p.score}</td>`;tbody.appendChild(tr)})
+}
+function showMsg(el,type,text){el.textContent=text;el.className='msg '+type}
+function isValidEmail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+document.querySelectorAll('.otp-digit').forEach((inp,i,all)=>{
+  inp.addEventListener('input',()=>{inp.value=inp.value.replace(/\D/,'');if(inp.value&&i<all.length-1)all[i+1].focus();if(i===all.length-1&&inp.value)verifyOTP()});
+  inp.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!inp.value&&i>0)all[i-1].focus()});
+  inp.addEventListener('paste',e=>{e.preventDefault();const p=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,4);all.forEach((d,j)=>{d.value=p[j]||''});if(p.length===4)verifyOTP()})
+});
+</script>
+</body>
+</html>
